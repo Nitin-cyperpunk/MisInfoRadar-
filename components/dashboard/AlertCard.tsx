@@ -111,12 +111,16 @@ export function AlertCard() {
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
                 Common Political Misinformation Alerts
               </p>
-              {fallbackAlerts.map((alert) => (
+              {fallbackAlerts.map((alert) => {
+                const severityClass =
+                  severityColors[alert.severity as keyof typeof severityColors] ||
+                  severityColors.medium
+                return (
                 <motion.div
                   key={alert.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`p-4 rounded-lg border ${severityColors[alert.severity]} hover:shadow-lg transition-shadow duration-300`}
+                  className={`p-4 rounded-lg border ${severityClass} hover:shadow-lg transition-shadow duration-300`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <Badge variant="outline" className="capitalize">
@@ -132,7 +136,7 @@ export function AlertCard() {
                     Type: {alert.alert_type}
                   </div>
                 </motion.div>
-              ))}
+              )})}
             </div>
           ) : alerts.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
@@ -140,12 +144,16 @@ export function AlertCard() {
             </div>
           ) : (
             <div className="space-y-3">
-              {alerts.map((alert) => (
+              {alerts.map((alert) => {
+                const severityClass =
+                  severityColors[alert.severity as keyof typeof severityColors] ||
+                  severityColors.medium
+                return (
                 <motion.div
                   key={alert.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`p-4 rounded-lg border ${severityColors[alert.severity]} hover:shadow-lg transition-shadow duration-300`}
+                  className={`p-4 rounded-lg border ${severityClass} hover:shadow-lg transition-shadow duration-300`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <Badge variant="outline" className="capitalize">
@@ -161,7 +169,7 @@ export function AlertCard() {
                     Type: {alert.alert_type}
                   </div>
                 </motion.div>
-              ))}
+              )})}
             </div>
           )}
         </ScrollArea>
