@@ -9,6 +9,7 @@ import { Bot, CheckCircle, AlertCircle, Search, Shield, Megaphone } from 'lucide
 import { formatDistanceToNow } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { AgentLog } from '@/lib/supabase/types'
+import { useRefresh } from '@/components/providers/RefreshProvider'
 const agentIcons = {
   monitor: Search,
   detector: AlertCircle,
@@ -39,14 +40,13 @@ export function AgentActivityFeed() {
   
   const [logs, setLogs] = useState<AgentLog[]>([])
   const [loading, setLoading] = useState(true)
+  const { refreshToken } = useRefresh()
   
   useEffect(() => {
     if (!supabase) {
       setLoading(false)
       return
     }
-    
-    loadLogs()
     
     // Real-time subscription
     const channel = supabase
@@ -63,15 +63,20 @@ export function AgentActivityFeed() {
       )
       .subscribe()
     
-    // Refresh every 30 seconds
-    const interval = setInterval(loadLogs, 30000)
-    
     return () => {
-      clearInterval(interval)
       supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase])
+
+  useEffect(() => {
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+    loadLogs()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, refreshToken])
   
   async function loadLogs() {
     if (!supabase) return

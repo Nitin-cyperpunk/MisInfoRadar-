@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Clock3 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { useRefresh } from '@/components/providers/RefreshProvider'
 
 type TimelineEvent = {
   time: string
@@ -23,6 +24,7 @@ export function DynamicTimeline() {
   
   const [events, setEvents] = useState<TimelineEvent[]>([])
   const [loading, setLoading] = useState(true)
+  const { refreshToken } = useRefresh()
   
   useEffect(() => {
     if (!supabase) {
@@ -31,10 +33,8 @@ export function DynamicTimeline() {
     }
     
     loadTimeline()
-    const interval = setInterval(loadTimeline, 30000) // Refresh every 30 seconds
-    
-    return () => clearInterval(interval)
-  }, [supabase])
+  // eslint-disable-next-line react-hooks-exhaustive-deps
+  }, [supabase, refreshToken])
   
   async function loadTimeline() {
     if (!supabase) return

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
+import { useRefresh } from '@/components/providers/RefreshProvider'
 
 type Stream = {
   label: string
@@ -25,6 +26,7 @@ export function DynamicLiveStreams() {
   
   const [streams, setStreams] = useState<Stream[]>([])
   const [loading, setLoading] = useState(true)
+  const { refreshToken } = useRefresh()
   
   useEffect(() => {
     if (!supabase) {
@@ -33,10 +35,8 @@ export function DynamicLiveStreams() {
     }
     
     loadStreams()
-    const interval = setInterval(loadStreams, 60000) // Refresh every minute
-    
-    return () => clearInterval(interval)
-  }, [supabase])
+  // eslint-disable-next-line react-hooks-exhaustive-deps
+  }, [supabase, refreshToken])
   
   async function loadStreams() {
     if (!supabase) return

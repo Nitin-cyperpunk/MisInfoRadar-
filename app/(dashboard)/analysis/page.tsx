@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useRefresh } from '@/components/providers/RefreshProvider'
 
 type FeedItem = {
   source: string
@@ -27,6 +28,7 @@ export default function AnalysisPage() {
     reasons: string[]
   }>(null)
   const [submitting, setSubmitting] = useState(false)
+  const { refreshToken } = useRefresh()
 
   const fetchFeeds = useCallback(
     async (showToast = false) => {
@@ -48,9 +50,7 @@ export default function AnalysisPage() {
 
   useEffect(() => {
     fetchFeeds()
-    const timer = setInterval(() => fetchFeeds(), 60000)
-    return () => clearInterval(timer)
-  }, [fetchFeeds])
+  }, [fetchFeeds, refreshToken])
 
   const handleAnalyze = async () => {
     if (!content.trim()) return
@@ -88,7 +88,7 @@ export default function AnalysisPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between text-xs text-slate-400">
-              <span>Auto-refresh every 60s</span>
+              <span>Syncs when Launch Agents runs</span>
               <button
                 onClick={() => {
                   fetchFeeds(true)

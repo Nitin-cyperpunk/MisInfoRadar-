@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useRefresh } from '@/components/providers/RefreshProvider'
 
 type Hashtag = {
   tag: string
@@ -20,6 +21,7 @@ export function DynamicHashtags() {
   
   const [hashtags, setHashtags] = useState<Hashtag[]>([])
   const [loading, setLoading] = useState(true)
+  const { refreshToken } = useRefresh()
   
   useEffect(() => {
     if (!supabase) {
@@ -28,10 +30,8 @@ export function DynamicHashtags() {
     }
     
     loadHashtags()
-    const interval = setInterval(loadHashtags, 120000) // Refresh every 2 minutes
-    
-    return () => clearInterval(interval)
-  }, [supabase])
+  // eslint-disable-next-line react-hooks-exhaustive-deps
+  }, [supabase, refreshToken])
   
   async function loadHashtags() {
     if (!supabase) return

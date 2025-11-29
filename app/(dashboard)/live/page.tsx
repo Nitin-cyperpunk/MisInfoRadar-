@@ -8,6 +8,7 @@ import { DynamicTimeline } from '@/components/dashboard/DynamicTimeline'
 import { useMemo, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatDistanceToNow } from 'date-fns'
+import { useRefresh } from '@/components/providers/RefreshProvider'
 
 export default function LivePage() {
   const supabase = useMemo(() => {
@@ -19,6 +20,7 @@ export default function LivePage() {
   }, [])
   
   const [lastRun, setLastRun] = useState<string>('')
+  const { refreshToken } = useRefresh()
   
   useEffect(() => {
     if (!supabase) return
@@ -38,9 +40,7 @@ export default function LivePage() {
     }
     
     loadLastRun()
-    const interval = setInterval(loadLastRun, 60000)
-    return () => clearInterval(interval)
-  }, [supabase])
+  }, [supabase, refreshToken])
 
   return (
     <div className="space-y-10">

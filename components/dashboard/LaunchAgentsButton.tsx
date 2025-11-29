@@ -4,9 +4,11 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ShieldCheck, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useRefresh } from '@/components/providers/RefreshProvider'
 
 export function LaunchAgentsButton() {
   const [isLaunching, setIsLaunching] = useState(false)
+  const { triggerRefresh } = useRefresh()
 
   const triggerAgents = async () => {
     setIsLaunching(true)
@@ -25,6 +27,7 @@ export function LaunchAgentsButton() {
       toast.error('Cannot reach agents. Configure Supabase to enable live runs.')
     } finally {
       setIsLaunching(false)
+      triggerRefresh()
     }
   }
 

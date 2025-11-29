@@ -9,6 +9,8 @@ import { AlertTriangle } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { motion } from 'framer-motion'
 import type { Alert } from '@/lib/supabase/types'
+import { useRefresh } from '@/components/providers/RefreshProvider'
+import { sampleAlerts } from '@/lib/sample-data'
 const severityColors = {
   low: 'bg-yellow-100 text-yellow-700 border-yellow-300',
   medium: 'bg-orange-100 text-orange-700 border-orange-300',
@@ -28,14 +30,13 @@ export function AlertCard() {
   
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [loading, setLoading] = useState(true)
+  const { refreshToken } = useRefresh()
   
   useEffect(() => {
     if (!supabase) {
       setLoading(false)
       return
     }
-    
-    loadAlerts()
     
     // Real-time subscription
     const channel = supabase
@@ -45,16 +46,20 @@ export function AlertCard() {
         () => loadAlerts()
       )
       .subscribe()
-    
-    // Refresh every 30 seconds
-    const interval = setInterval(loadAlerts, 30000)
-    
     return () => {
-      clearInterval(interval)
       supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase])
+
+  useEffect(() => {
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+    loadAlerts()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, refreshToken])
   
   async function loadAlerts() {
     if (!supabase) return
@@ -80,6 +85,13 @@ export function AlertCard() {
     }
   }
   
+  const shouldShowFallback = !loading && alerts.length === 0
+  const fallbackAlerts = sampleAlerts.map((alert) => ({
+    ...alert,
+    title: alert.title,
+    message: alert.message,
+  }))
+  
   return (
     <Card>
       <CardHeader>
@@ -93,6 +105,34 @@ export function AlertCard() {
           {loading ? (
             <div className="text-center text-muted-foreground py-8">
               Loading alerts...
+            </div>
+          ) : shouldShowFallback ? (
+            <div className="space-y-3">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                Common Political Misinformation Alerts
+              </p>
+              {fallbackAlerts.map((alert) => (
+                <motion.div
+                  key={alert.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`p-4 rounded-lg border ${severityColors[alert.severity]} hover:shadow-lg transition-shadow duration-300`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <Badge variant="outline" className="capitalize">
+                      {alert.severity}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true })}
+                    </span>
+                  </div>
+                  <h4 className="font-semibold mb-1">{alert.title}</h4>
+                  <p className="text-sm opacity-90">{alert.message}</p>
+                  <div className="mt-2 text-xs opacity-75">
+                    Type: {alert.alert_type}
+                  </div>
+                </motion.div>
+              ))}
             </div>
           ) : alerts.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">

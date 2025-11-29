@@ -9,6 +9,7 @@ import { ExternalLink } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { motion } from 'framer-motion'
 import type { ContentItem } from '@/lib/supabase/types'
+import { useRefresh } from '@/components/providers/RefreshProvider'
 export function ContentCard() {
   const supabase = useMemo(() => {
     try {
@@ -21,14 +22,13 @@ export function ContentCard() {
   
   const [contentItems, setContentItems] = useState<ContentItem[]>([])
   const [loading, setLoading] = useState(true)
+  const { refreshToken } = useRefresh()
   
   useEffect(() => {
     if (!supabase) {
       setLoading(false)
       return
     }
-    
-    loadContent()
     
     // Real-time subscription
     const channel = supabase
@@ -38,16 +38,20 @@ export function ContentCard() {
         () => loadContent()
       )
       .subscribe()
-    
-    // Refresh every 30 seconds
-    const interval = setInterval(loadContent, 30000)
-    
     return () => {
-      clearInterval(interval)
       supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase])
+
+  useEffect(() => {
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+    loadContent()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, refreshToken])
   
   async function loadContent() {
     if (!supabase) return

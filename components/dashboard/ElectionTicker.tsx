@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
+import { useRefresh } from '@/components/providers/RefreshProvider'
 
 type TickerItem = {
   headline: string
@@ -37,93 +38,12 @@ export function ElectionTicker() {
   
   const [items, setItems] = useState<TickerItem[]>([])
   const [loading, setLoading] = useState(true)
-  
+  const { refreshToken } = useRefresh()
+
   useEffect(() => {
     if (!supabase) {
       setLoading(false)
       return
-    }
-    
-    const loadMisinformation = async () => {
-      try {
-        setLoading(true)
-        // First try to fetch alerts
-        const { data: alerts, error: alertsError } = await supabase
-          .from('alerts')
-          .select('id, title, message, severity, alert_type, created_at, content_id')
-          .eq('status', 'active')
-          .order('created_at', { ascending: false })
-          .limit(10)
-        
-        if (alerts && alerts.length > 0 && !alertsError) {
-          // Get content items for these alerts
-          const contentIds = alerts.map(a => a.content_id).filter(Boolean)
-          let contentItemsMap: Record<string, any> = {}
-          
-          if (contentIds.length > 0) {
-            const { data: contentItems } = await supabase
-              .from('content_items')
-              .select('id, title, is_election_related')
-              .in('id', contentIds)
-            
-            if (contentItems) {
-              contentItemsMap = Object.fromEntries(
-                contentItems.map(item => [item.id, item])
-              )
-            }
-          }
-          
-          const tickerItems: TickerItem[] = alerts
-            .filter(alert => {
-              const content = contentItemsMap[alert.content_id]
-              return content?.is_election_related !== false
-            })
-            .map((alert) => {
-              const content = contentItemsMap[alert.content_id]
-              return {
-                headline: alert.title || content?.title || 'Political Misinformation Detected',
-                source: alert.alert_type === 'deepfake' ? 'Deepfake Alert' :
-                        alert.severity === 'critical' ? 'Critical Alert' : 'Misinformation Alert',
-                state: 'Maharashtra',
-                time: formatTimeAgo(new Date(alert.created_at))
-              }
-            })
-          
-          if (tickerItems.length > 0) {
-            setItems(tickerItems)
-            return
-          }
-        }
-        
-        // Fallback to content items with misinformation (include election-related check)
-        const { data: contentItems } = await supabase
-          .from('content_items')
-          .select('title, description, severity_level, misinformation_type, created_at, is_election_related')
-          .eq('is_misinformation', true)
-          .order('created_at', { ascending: false })
-          .limit(20)
-        
-        // Filter for election-related or show all if none are election-related
-        const electionItems = contentItems?.filter(item => 
-          item.is_election_related !== false
-        ) || contentItems || []
-        
-        if (electionItems && electionItems.length > 0) {
-          const tickerItems: TickerItem[] = electionItems.slice(0, 10).map((item) => ({
-            headline: item.title || 'Misinformation Detected',
-            source: item.misinformation_type === 'deepfake' ? 'Deepfake Alert' : 
-                    item.severity_level === 'critical' ? 'Critical Alert' : 
-                    item.severity_level === 'high' ? 'High Alert' : 'Misinformation Alert',
-            state: 'Maharashtra',
-            time: formatTimeAgo(new Date(item.created_at))
-          }))
-          setItems(tickerItems)
-        }
-      } catch (error) {
-        console.error('Error loading misinformation:', error)
-      } finally {
-        setLoading(false)
-      }
     }
     
     // Load immediately
@@ -149,7 +69,101 @@ export function ElectionTicker() {
       clearInterval(interval)
       supabase.removeChannel(channel)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase])
+
+  useEffect(() => {
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+    loadMisinformation()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, refreshToken])
+
+  async function loadMisinformation() {
+    if (!supabase) return
+
+    try {
+      setLoading(true)
+      // First try to fetch alerts
+      const { data: alerts, error: alertsError } = await supabase
+        .from('alerts')
+        .select('id, title, message, severity, alert_type, created_at, content_id')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(10)
+      
+      if (alerts && alerts.length > 0 && !alertsError) {
+        // Get content items for these alerts
+        const contentIds = alerts.map(a => a.content_id).filter(Boolean)
+        let contentItemsMap: Record<string, any> = {}
+        
+        if (contentIds.length > 0) {
+          const { data: contentItems } = await supabase
+            .from('content_items')
+            .select('id, title, is_election_related')
+            .in('id', contentIds)
+          
+          if (contentItems) {
+            contentItemsMap = Object.fromEntries(
+              contentItems.map(item => [item.id, item])
+            )
+          }
+        }
+        
+        const tickerItems: TickerItem[] = alerts
+          .filter(alert => {
+            const content = contentItemsMap[alert.content_id]
+            return content?.is_election_related !== false
+          })
+          .map((alert) => {
+            const content = contentItemsMap[alert.content_id]
+            return {
+              headline: alert.title || content?.title || 'Political Misinformation Detected',
+              source: alert.alert_type === 'deepfake' ? 'Deepfake Alert' :
+                      alert.severity === 'critical' ? 'Critical Alert' : 'Misinformation Alert',
+              state: 'Maharashtra',
+              time: formatTimeAgo(new Date(alert.created_at))
+            }
+          })
+        
+        if (tickerItems.length > 0) {
+          setItems(tickerItems)
+          return
+        }
+      }
+      
+      // Fallback to content items with misinformation (include election-related check)
+      const { data: contentItems } = await supabase
+        .from('content_items')
+        .select('title, description, severity_level, misinformation_type, created_at, is_election_related')
+        .eq('is_misinformation', true)
+        .order('created_at', { ascending: false })
+        .limit(20)
+      
+      // Filter for election-related or show all if none are election-related
+      const electionItems = contentItems?.filter(item => 
+        item.is_election_related !== false
+      ) || contentItems || []
+      
+      if (electionItems && electionItems.length > 0) {
+        const tickerItems: TickerItem[] = electionItems.slice(0, 10).map((item) => ({
+          headline: item.title || 'Misinformation Detected',
+          source: item.misinformation_type === 'deepfake' ? 'Deepfake Alert' : 
+                  item.severity_level === 'critical' ? 'Critical Alert' : 
+                  item.severity_level === 'high' ? 'High Alert' : 'Misinformation Alert',
+          state: 'Maharashtra',
+          time: formatTimeAgo(new Date(item.created_at))
+        }))
+        setItems(tickerItems)
+      }
+    } catch (error) {
+      console.error('Error loading misinformation:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
   
   return (
     <div className="glass-panel border-white/10 bg-white/5 px-4 py-3">

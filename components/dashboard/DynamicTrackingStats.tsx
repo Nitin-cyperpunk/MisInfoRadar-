@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useRefresh } from '@/components/providers/RefreshProvider'
 
 type GeographicSpread = { region?: string | null }
 type TraceRecord = { geographic_spread?: GeographicSpread[] | null }
@@ -21,6 +22,7 @@ export function DynamicTrackingStats() {
     counterCampaigns: '0 live',
   })
   const [loading, setLoading] = useState(true)
+  const { refreshToken } = useRefresh()
   
   useEffect(() => {
     if (!supabase) {
@@ -29,10 +31,8 @@ export function DynamicTrackingStats() {
     }
     
     loadStats()
-    const interval = setInterval(loadStats, 60000) // Refresh every minute
-    
-    return () => clearInterval(interval)
-  }, [supabase])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, refreshToken])
   
   async function loadStats() {
     if (!supabase) return
