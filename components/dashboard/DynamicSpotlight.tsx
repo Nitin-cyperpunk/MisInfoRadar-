@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatDistanceToNow } from 'date-fns'
+import { useRefresh } from '@/components/providers/RefreshProvider'
 
 type SpotlightCard = {
   title: string
@@ -22,6 +23,7 @@ export function DynamicSpotlight() {
   
   const [cards, setCards] = useState<SpotlightCard[]>([])
   const [loading, setLoading] = useState(true)
+  const { refreshToken } = useRefresh()
   
   useEffect(() => {
     if (!supabase) {
@@ -30,10 +32,8 @@ export function DynamicSpotlight() {
     }
     
     loadSpotlight()
-    const interval = setInterval(loadSpotlight, 60000) // Refresh every minute
-    
-    return () => clearInterval(interval)
-  }, [supabase])
+  // eslint-disable-next-line react-hooks-exhaustive-deps
+  }, [supabase, refreshToken])
   
   async function loadSpotlight() {
     if (!supabase) return

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Activity, AlertTriangle, CheckCircle, Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useRefresh } from '@/components/providers/RefreshProvider'
 
 export function LiveMetrics() {
   const supabase = useMemo(() => {
@@ -24,14 +25,13 @@ export function LiveMetrics() {
   })
   
   const [loading, setLoading] = useState(true)
+  const { refreshToken } = useRefresh()
   
   useEffect(() => {
     if (!supabase) {
       setLoading(false)
       return
     }
-    
-    loadMetrics()
     
     // Subscribe to real-time updates
     const channel = supabase
@@ -46,15 +46,21 @@ export function LiveMetrics() {
       )
       .subscribe()
     
-    // Refresh every 30 seconds
-    const interval = setInterval(loadMetrics, 30000)
-    
     return () => {
-      clearInterval(interval)
       supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase])
+
+  useEffect(() => {
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+
+    loadMetrics()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, refreshToken])
   
   async function loadMetrics() {
     if (!supabase) return

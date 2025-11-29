@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
+import { useRefresh } from '@/components/providers/RefreshProvider'
 
 type Sensor = {
   name: string
@@ -23,6 +24,7 @@ export function DynamicSensors() {
   
   const [sensors, setSensors] = useState<Sensor[]>([])
   const [loading, setLoading] = useState(true)
+  const { refreshToken } = useRefresh()
   
   useEffect(() => {
     if (!supabase) {
@@ -31,10 +33,8 @@ export function DynamicSensors() {
     }
     
     loadSensors()
-    const interval = setInterval(loadSensors, 30000) // Refresh every 30 seconds
-    
-    return () => clearInterval(interval)
-  }, [supabase])
+  // eslint-disable-next-line react-hooks-exhaustive-deps
+  }, [supabase, refreshToken])
   
   async function loadSensors() {
     if (!supabase) return

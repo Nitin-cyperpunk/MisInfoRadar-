@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "react-hot-toast"
+import { PageShell } from "@/components/animations/PageShell"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -21,8 +22,15 @@ export default function RootLayout({
       <body className={`${inter.className} bg-slate-950`}>
         <div className="relative min-h-screen overflow-hidden">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.35),_transparent_45%),radial-gradient(circle_at_20%_20%,_rgba(236,72,153,0.25),_transparent_35%),radial-gradient(circle_at_80%_0%,_rgba(14,165,233,0.15),_transparent_40%)]" />
-          <div className="absolute inset-0 opacity-[0.15]" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }} />
-          <div className="relative z-10">{children}</div>
+          <div
+            className="absolute inset-0 opacity-[0.15]"
+            style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}
+          />
+          <div className="relative z-10 flex min-h-screen flex-col">
+            <main className="mx-auto flex w-full max-w-6xl flex-1 px-4 pb-10 pt-6 md:pt-8">
+              <PageShell>{children}</PageShell>
+            </main>
+          </div>
         </div>
         <Toaster position="top-right" />
       </body>

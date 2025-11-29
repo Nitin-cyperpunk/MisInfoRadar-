@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ElectionTicker } from '@/components/dashboard/ElectionTicker'
 import { Activity, Satellite } from 'lucide-react'
+import { YouTubeHashtags } from '@/components/dashboard/YouTubeHashtags'
 
 export default function DashboardPage() {
 
@@ -81,8 +82,14 @@ export default function DashboardPage() {
         <div className="glass-panel border-white/10 p-6">
           <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Trending Signals</p>
           <h2 className="mt-3 text-xl font-semibold text-white">Hashtags & Payloads</h2>
-          <div className="mt-6">
+          <div className="mt-6 space-y-6">
             <DynamicHashtags />
+            <div className="border-t border-white/10 pt-4">
+              <p className="mb-2 text-xs font-medium uppercase tracking-[0.3em] text-slate-400">
+                YouTube Hashtags
+              </p>
+              <YouTubeHashtags query="indian elections" />
+            </div>
           </div>
           <div className="mt-6 rounded-2xl border border-white/10 bg-gradient-to-r from-blue-600/30 to-purple-600/30 p-4 text-sm text-white">
             <div className="flex items-center gap-2">

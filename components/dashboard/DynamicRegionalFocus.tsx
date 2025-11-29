@@ -1,8 +1,10 @@
-'use client'
+ 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { MapPin } from 'lucide-react'
+import { useRefresh } from '@/components/providers/RefreshProvider'
+import { sampleContentItems } from '@/lib/sample-data'
 
 type RegionalFocus = {
   region: string
@@ -10,6 +12,18 @@ type RegionalFocus = {
   confidence: string
   status: 'critical' | 'high' | 'medium' | 'low'
 }
+
+const STATE_OPTIONS = [
+  'All',
+  'Maharashtra',
+  'Mumbai',
+  'Pune',
+  'Nagpur',
+  'Kolhapur',
+  'Satara',
+  'Thane',
+  'Aurangabad',
+]
 
 export function DynamicRegionalFocus() {
   const supabase = useMemo(() => {
@@ -22,6 +36,8 @@ export function DynamicRegionalFocus() {
   
   const [regions, setRegions] = useState<RegionalFocus[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedState, setSelectedState] = useState<string>('All')
+  const { refreshToken } = useRefresh()
   
   useEffect(() => {
     if (!supabase) {
@@ -30,10 +46,8 @@ export function DynamicRegionalFocus() {
     }
     
     loadRegionalFocus()
-    const interval = setInterval(loadRegionalFocus, 120000) // Refresh every 2 minutes
-    
-    return () => clearInterval(interval)
-  }, [supabase])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, refreshToken])
   
   async function loadRegionalFocus() {
     if (!supabase) return
@@ -61,7 +75,7 @@ export function DynamicRegionalFocus() {
       if (contentIds.length > 0) {
         const { data: contentItems } = await supabase
           .from('content_items')
-          .select('id, title, keywords, geographic_spread')
+          .select('id, title, keywords, geographic_spread, misinformation_confidence')
           .in('id', contentIds)
         
         if (contentItems) {
@@ -87,7 +101,7 @@ export function DynamicRegionalFocus() {
       }
       
       // Extract regions from alerts and content
-      const regionMap: Record<string, { alerts: any[]; maxSeverity: string; maxConfidence: number }> = {}
+      const regionMap: Record<string, { alerts: any[]; maxSeverity: string }> = {}
       
       alerts.forEach(alert => {
         const content = contentMap[alert.content_id]
@@ -110,7 +124,7 @@ export function DynamicRegionalFocus() {
         }
         
         if (!regionMap[region]) {
-          regionMap[region] = { alerts: [], maxSeverity: 'low', maxConfidence: 0 }
+          regionMap[region] = { alerts: [], maxSeverity: 'low' }
         }
         
         regionMap[region].alerts.push(alert)
@@ -155,7 +169,7 @@ export function DynamicRegionalFocus() {
           const order = { critical: 4, high: 3, medium: 2, low: 1 }
           return order[b.status] - order[a.status]
         })
-        .slice(0, 4)
+        .slice(0, 8)
       
       setRegions(regionArray)
     } catch (error) {
@@ -165,7 +179,37 @@ export function DynamicRegionalFocus() {
     }
   }
   
-  if (loading) {
+  const hasLiveRegions = regions.length > 0
+  
+  // Fallback when there are no live regions: use sample content items by state
+  const fallbackRegions: RegionalFocus[] = !hasLiveRegions
+    ? sampleContentItems
+        .filter(item => item.is_misinformation)
+        .map(item => {
+          const text = `${item.title} ${item.description || ''}`
+          const cities = ['Mumbai', 'Pune', 'Nagpur', 'Kolhapur', 'Satara', 'Thane', 'Aurangabad']
+          const foundCity = cities.find(city => text.toLowerCase().includes(city.toLowerCase()))
+          const region = foundCity || 'Maharashtra'
+          
+          return {
+            region,
+            signal: item.title,
+            confidence: (item.misinformation_confidence || 0.5).toFixed(2),
+            status: (item.severity_level as 'critical' | 'high' | 'medium' | 'low') || 'medium',
+          }
+        })
+    : []
+  
+  const allRegions = hasLiveRegions ? regions : fallbackRegions
+  
+  const filteredRegions =
+    selectedState === 'All'
+      ? allRegions
+      : allRegions.filter(r =>
+          r.region.toLowerCase().includes(selectedState.toLowerCase())
+        )
+  
+  if (loading && allRegions.length === 0) {
     return (
       <div className="space-y-4">
         {[1, 2, 3, 4].map(i => (
@@ -182,17 +226,32 @@ export function DynamicRegionalFocus() {
     )
   }
   
-  if (regions.length === 0) {
+  if (!loading && filteredRegions.length === 0) {
     return (
       <div className="text-center text-slate-400 py-8 text-sm">
-        No regional alerts detected yet. Regional focus will appear here when alerts are created.
+        No regional news found for this selection.
       </div>
     )
   }
   
   return (
     <div className="space-y-4">
-      {regions.map((region, idx) => (
+      <div className="flex items-center justify-between text-xs text-slate-300 mb-1">
+        <span className="uppercase tracking-[0.3em] text-slate-400">Region Filter</span>
+        <select
+          value={selectedState}
+          onChange={(e) => setSelectedState(e.target.value)}
+          className="rounded-full border border-white/15 bg-black/40 px-3 py-1 text-xs text-slate-100 outline-none focus:border-white/40"
+        >
+          {STATE_OPTIONS.map(state => (
+            <option key={state} value={state}>
+              {state === 'All' ? 'All Regions' : state}
+            </option>
+          ))}
+        </select>
+      </div>
+      
+      {filteredRegions.map((region, idx) => (
         <div key={`${region.region}-${idx}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center justify-between text-sm text-slate-300">
             <div className="flex items-center gap-2 text-white">
