@@ -17,42 +17,56 @@ export function SyncTimer() {
   useEffect(() => {
     if (!supabase) return
     
-    const updateTimer = () => {
-      // Get monitor agent scan interval from env
-      const scanInterval = parseInt(process.env.NEXT_PUBLIC_MONITOR_SCAN_INTERVAL_MS || '300000') // Default 5 minutes
-      
-      // Get last monitor agent run
-      supabase
-        .from('agent_logs')
-        .select('created_at')
-        .eq('agent_name', 'monitor')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-        .then(({ data }) => {
-          if (data) {
-            const lastRun = new Date(data.created_at).getTime()
-            const nextRun = lastRun + scanInterval
-            const now = Date.now()
-            const remaining = Math.max(0, nextRun - now)
-            
-            const minutes = Math.floor(remaining / 60000)
-            const seconds = Math.floor((remaining % 60000) / 1000)
-            
-            setTimeRemaining(`${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`)
-          } else {
-            setTimeRemaining('Starting...')
-          }
-        })
-        .catch(() => {
-          setTimeRemaining('--:--')
-        })
+    let isMounted = true
+
+    const updateTimer = async () => {
+      try {
+        // Get monitor agent scan interval from env
+        const scanInterval = parseInt(
+          process.env.NEXT_PUBLIC_MONITOR_SCAN_INTERVAL_MS || '300000'
+        ) // Default 5 minutes
+
+        // Get last monitor agent run
+        const { data } = await supabase
+          .from('agent_logs')
+          .select('created_at')
+          .eq('agent_name', 'monitor')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (!isMounted) return
+
+        if (data) {
+          const lastRun = new Date((data as { created_at: string }).created_at).getTime()
+          const nextRun = lastRun + scanInterval
+          const now = Date.now()
+          const remaining = Math.max(0, nextRun - now)
+
+          const minutes = Math.floor(remaining / 60000)
+          const seconds = Math.floor((remaining % 60000) / 1000)
+
+          setTimeRemaining(
+            `${minutes.toString().padStart(2, '0')}m ${seconds
+              .toString()
+              .padStart(2, '0')}s`
+          )
+        } else {
+          setTimeRemaining('Starting...')
+        }
+      } catch {
+        if (!isMounted) return
+        setTimeRemaining('--:--')
+      }
     }
     
-    updateTimer()
-    const interval = setInterval(updateTimer, 1000) // Update every second
+    void updateTimer()
+    const interval: ReturnType<typeof setInterval> = setInterval(updateTimer, 1000) // Update every second
     
-    return () => clearInterval(interval)
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
   }, [supabase])
   
   return (

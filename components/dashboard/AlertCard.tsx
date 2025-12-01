@@ -11,11 +11,19 @@ import { motion } from 'framer-motion'
 import type { Alert } from '@/lib/supabase/types'
 import { useRefresh } from '@/components/providers/RefreshProvider'
 import { sampleAlerts } from '@/lib/sample-data'
+
 const severityColors = {
   low: 'bg-yellow-100 text-yellow-700 border-yellow-300',
   medium: 'bg-orange-100 text-orange-700 border-orange-300',
   high: 'bg-red-100 text-red-700 border-red-300',
-  critical: 'bg-red-200 text-red-800 border-red-400'
+  critical: 'bg-red-200 text-red-800 border-red-400',
+}
+
+type AlertSeverity = keyof typeof severityColors
+
+function getSeverityClass(severity: string | null | undefined): string {
+  const normalized = (severity || 'medium').toLowerCase() as AlertSeverity
+  return severityColors[normalized] || severityColors.medium
 }
 
 export function AlertCard() {
@@ -116,7 +124,7 @@ export function AlertCard() {
                   key={alert.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`p-4 rounded-lg border ${severityColors[alert.severity]} hover:shadow-lg transition-shadow duration-300`}
+                  className={`p-4 rounded-lg border ${getSeverityClass(alert.severity as string)} hover:shadow-lg transition-shadow duration-300`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <Badge variant="outline" className="capitalize">
@@ -145,7 +153,7 @@ export function AlertCard() {
                   key={alert.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`p-4 rounded-lg border ${severityColors[alert.severity]} hover:shadow-lg transition-shadow duration-300`}
+                  className={`p-4 rounded-lg border ${getSeverityClass(alert.severity as string)} hover:shadow-lg transition-shadow duration-300`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <Badge variant="outline" className="capitalize">
