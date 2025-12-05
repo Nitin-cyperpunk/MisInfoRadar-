@@ -3,7 +3,7 @@
 **Autonomous Election Integrity Network powered by Multi-Agent AI**
 
 [![MumbaiHacks 2025](https://img.shields.io/badge/MumbaiHacks-2025-blue)](https://mumbaihacks.com)  
-[![Built in 48 Hours](https://img.shields.io/badge/Built%20in-48%20Hours-orange)](https://github.com/yourusername/misinforadar)  
+[![Built in 48 Hours](https://img.shields.io/badge/Built%20in-48%20Hours-orange)](https://github.com/Nitin-cyperpunk/misinforadar)  
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)  
 [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)  
 [![Supabase](https://img.shields.io/badge/Supabase-Powered-green)](https://supabase.com/)
@@ -410,13 +410,13 @@ See the [`LICENSE`](LICENSE) file for full details.
 
 - **Email:** `bhaveshpatiltech@gmail.com`  
 - **Website:** [`https://misinforadar.vercel.app`](https://misinforadar.vercel.app)  
-- **Issues:** [GitHub Issues](https://github.com/yourusername/misinforadar/issues)
+- **Issues:** [GitHub Issues](https://github.com/Nitin-cyperpunk/misinforadar/issues)
 
 ---
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=yourusername/misinforadar&type=Date)](https://star-history.com/#yourusername/misinforadar&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=Nitin-cyperpunk/misinforadar&type=Date)](https://star-history.com/#Nitin-cyperpunk/misinforadar&Date)
 
 ---
 
